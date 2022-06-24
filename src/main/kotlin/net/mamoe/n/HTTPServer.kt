@@ -37,7 +37,11 @@ object HTTPServer {
 
                 get("/receive"){
                     try {
-                        val address = call.parameters.getOrFail("address")
+                        val address = call.parameters["address"]
+                        if (address == null){
+                            call.respond(HttpStatusCode.BadRequest, "Missing address parameter")
+                            return@get
+                        }
                         val email = EmailStorageService.get(address)
                         call.respond(
                             HttpStatusCode.OK, Json.encodeToString(
