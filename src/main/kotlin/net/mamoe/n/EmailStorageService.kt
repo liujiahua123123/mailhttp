@@ -42,6 +42,7 @@ object EmailStorageService {
         getFileFor(email.to).apply {
             if (!this.exists()) {
                 this.createNewFile()
+                this.deleteOnExit()
             }
         }.writeData(email)
 
@@ -70,15 +71,6 @@ object EmailStorageService {
                     handle(task)
                 }
             }
-            Runtime.getRuntime().addShutdownHook(thread(start = false) {
-                runBlocking {
-                    var curr = tasks.tryReceive().getOrNull()
-                    while (curr != null) {
-                        handle(curr, force = true)
-                        curr = tasks.tryReceive().getOrNull()
-                    }
-                }
-            })
         }
 
         private fun handle(task: EmailDeleteTask, force: Boolean = false) {

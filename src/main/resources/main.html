@@ -2,9 +2,133 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Inbox Service</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdui@0.4.3/dist/css/mdui.min.css" crossorigin="anonymous"/>
+    <script src="https://cdn.jsdelivr.net/npm/mdui@0.4.3/dist/js/mdui.min.js" crossorigin="anonymous"></script>
+    <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+
+    <style>
+        button{
+            color: white;
+        }
+    </style>
+
+    <script>
+        function setCookie(cname, cvalue, exdays) {
+            const d = new Date();
+            d.setTime(d.getTime() + (exdays*24*60*60*1000));
+            let expires = "expires="+ d.toUTCString();
+            document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+        }
+
+        function getCookie(cname) {
+            let name = cname + "=";
+            let decodedCookie = decodeURIComponent(document.cookie);
+            let ca = decodedCookie.split(';');
+            for(let i = 0; i <ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) === 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return "";
+        }
+
+        function login(){
+            mdui.prompt('Email address (should contains \'@\' and domain)', 'Login to inbox serivce',
+                function (value) {
+                    setCookie("address",value,365)
+                    var x = setInterval(function () {
+                        window.location.reload()
+                        clearInterval(x)
+                    },20)
+                },
+                function (value) {
+                    login()
+                }
+            ,{modal: true});
+        }
+
+        var lastReceivedId = ""
+        var address = ""
+
+        function checkMailRequester(){
+            let x = new XMLHttpRequest();
+            x.open("GET", "/receive?address=" + address,true)
+            x.onreadystatechange = function () {
+                if (x.readyState === 4) {
+                    let data = JSON.parse(x.responseText);
+                    if(data.success){
+                        let email = data.email;
+                        if(lastReceivedId !== email.id){
+                            lastReceivedId = email.id
+                            $("#remoteAddress").text(email.remoteAddress)
+                            $("#content").html(email.content)
+                            $("#from").text(email.from)
+                            $("#title").text(email.title)
+                        }
+                    }
+                }
+            }
+            x.send("")
+        }
+
+        function checkMail(){
+            setInterval(function () {
+                checkMailRequester()
+            },2000)
+        }
+
+        $(window).ready(function () {
+            $('#relogin').click(function () {
+                setCookie("address","",-1)
+                login()
+            })
+            address = getCookie("address");
+            if(address === ""){
+                login()
+            }
+            $("#mail-address").text(address)
+            checkMail()
+        })
+    </script>
 </head>
-<body>
+<body class="mdui-theme-layout-dark mdui-theme-accent-orange mdui-theme-primary-teal mdui-theme-accent-pink">
+
+<div style="height: 100vh;overflow: scroll">
+    <div class="mdui-toolbar mdui-color-theme">
+        <span class="mdui-typo-title"><b id="mail-address" style="margin: 5px">tst@vas.com</b>'s mail box</span>
+        <div class="mdui-toolbar-spacer"></div>
+        <a href="javascript:;" id="relogin" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">home</i></a>
+    </div>
+
+    <div class="mdui-container" style="padding: 6px">
+        <div class="mdui-shadow-6" style="min-height: 300px">
+            <div class="mdui-row" style="margin-top: 12px">
+                <div class="mdui-typo mdui-col-md-12" id="content">
+                    <blockquote>
+                        <p>Receiving Email ... </p>
+                        <p>Email will be deleted <code>10</code> minutes after being received </p>
+                        <p>Server only keeps <code>1</code> latest mail for each address  </p>
+                        <p>You are able to see email that was received prior to login </p>
+                    </blockquote>
+                </div>
+
+                <div class="mdui-typo mdui-col-md-12">
+                    <blockquote>
+                        <p>Title: <code id="title">~</code></p>
+                        <p>From: <code id="from">~</code> IP= <code id="remoteAddress">~</code></p>
+                    </blockquote>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</div>
 
 </body>
 </html>

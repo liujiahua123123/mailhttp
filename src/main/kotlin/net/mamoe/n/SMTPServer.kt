@@ -35,12 +35,12 @@ object SMTPServer {
 
                 var body = "empty body"
 
-                val primaryHtmlBodyBytes = parsedMail.htmlEmailBody?.`is`?.readAllBytes()
+                val primaryHtmlBodyBytes = parsedMail.htmlEmailBody?.`is`?.readBytes()
                 if (primaryHtmlBodyBytes != null) {
                     body = String(primaryHtmlBodyBytes, Charset.forName("UTF-8"))
                 }
                 if (body.isBlank()) {
-                    val secondaryPlainTextBody = parsedMail.plainTextEmailBody?.`is`?.readAllBytes()
+                    val secondaryPlainTextBody = parsedMail.plainTextEmailBody?.`is`?.readBytes()
                     if (secondaryPlainTextBody != null) {
                         body = String(secondaryPlainTextBody, Charset.forName("UTF-8"))
                     }
